@@ -1,0 +1,39 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Pi/local agent artifacts
+.pi/
+
+# Logs and temp files
+*.log
+*.tmp
+tmp/
+
+# Unreal generated project artifacts, in case the skill is tested inside a project
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+*.sln
+*.suo
