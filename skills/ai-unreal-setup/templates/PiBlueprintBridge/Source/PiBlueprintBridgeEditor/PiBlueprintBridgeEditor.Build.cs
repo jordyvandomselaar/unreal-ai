@@ -19,6 +19,7 @@ public class PiBlueprintBridgeEditor : ModuleRules
             "AssetRegistry",
             "BlueprintGraph",
             "EditorScriptingUtilities",
+            "Json",
             "Kismet",
             "KismetCompiler",
             "UnrealEd"

@@ -18,8 +18,8 @@ The supported setup has two layers:
 2. **C++ Blueprint bridge plugin**
    - Adds project plugin `Plugins/PiBlueprintBridge`.
    - Exposes `unreal.PiBlueprintBridgeEditorLibrary` to Python.
-   - Lets Pi create Actor Blueprints, add components, add Event Graph nodes, wire pins, compile, and save.
-   - Adds runtime function `PiBlueprintRuntimeLibrary.FollowPlayerPawn` used by the proof Blueprint.
+   - Lets Pi create Actor Blueprints, add scene/static-mesh components, assemble multi-part mesh actors from JSON, add Event Graph nodes, wire pins, compile, and save.
+   - Adds runtime functions such as `PiBlueprintRuntimeLibrary.FollowPlayerPawn` and `PiBlueprintRuntimeLibrary.WanderActor` for generated Blueprint behavior.
 
 Everything network-facing should stay local-only. Python remote execution is remote code execution. Treat it like a loaded nail gun.
 
@@ -318,6 +318,32 @@ The generated proof Blueprint contains:
 - Call to `PiBlueprintRuntimeLibrary.FollowPlayerPawn`.
 - Wired exec, DeltaSeconds, and Follower pins.
 - Offset default `(-250, 120, 120)` and Speed `6`.
+
+Generic assembly call:
+
+```python
+import json
+
+parts = [
+    {"name": "Trunk", "mesh": "cylinder", "location": [0, 0, 140], "scale": [0.7, 0.7, 2.8], "color": [0.35, 0.18, 0.08]},
+    {"name": "Canopy", "mesh": "sphere", "location": [0, 0, 360], "scale": [2.4, 2.4, 1.7], "color": [0.05, 0.45, 0.12]},
+]
+result = unreal.PiBlueprintBridgeEditorLibrary.create_static_mesh_assembly_blueprint_from_json(
+    '/Game/PiProof/BP_Tree',
+    json.dumps(parts),
+    True,
+)
+bp = result[0] if isinstance(result, tuple) else result
+```
+
+Generic assembly support:
+
+- `CreateStaticMeshAssemblyBlueprint` creates or updates an Actor Blueprint from `PiBlueprintStaticMeshPart` values.
+- `CreateStaticMeshAssemblyBlueprintFromJson` accepts either an array of part objects or an object with a `parts` array.
+- Each part can set mesh path, parent, relative location/rotation/scale, collision, shadowing, material path, or inline solid color.
+- Mesh path accepts full asset paths or aliases for built-in primitives: `cube`, `sphere`, `cylinder`, `cone`, and `plane`.
+- Inline colors are materialized as reusable assets under `/Game/Pi/GeneratedMaterials`.
+- `AddTickFunctionCall` wires Event Tick to any BlueprintCallable function and can set default pins, so generated actors can receive behavior without hard-coded object-specific Blueprint creators.
 
 ## Debugging matrix
 

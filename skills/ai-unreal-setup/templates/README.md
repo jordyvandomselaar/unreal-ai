@@ -58,9 +58,21 @@ unreal.PiBlueprintBridgeEditorLibrary.create_follow_player_cube_blueprint('/Game
 
 That creates an Actor Blueprint with a Cube StaticMeshComponent and Event Tick graph wired to `PiBlueprintRuntimeLibrary.FollowPlayerPawn`.
 
+It can also assemble multi-part static mesh actors from JSON:
+
+```python
+import json
+
+parts = [
+    {"name": "Trunk", "mesh": "cylinder", "location": [0, 0, 140], "scale": [0.7, 0.7, 2.8], "color": [0.35, 0.18, 0.08]},
+    {"name": "Canopy", "mesh": "sphere", "location": [0, 0, 360], "scale": [2.4, 2.4, 1.7], "color": [0.05, 0.45, 0.12]},
+]
+unreal.PiBlueprintBridgeEditorLibrary.create_static_mesh_assembly_blueprint_from_json('/Game/Blueprints/BP_PiTree', json.dumps(parts), True)
+```
+
 ## Notes
 
 - Python remote execution is the main path for editor automation: moving actors, spawning actors, saving assets/levels, and running editor utilities.
-- `PiBlueprintBridge` is the path for durable Blueprint asset/component/K2 graph generation.
+- `PiBlueprintBridge` is the path for durable Blueprint asset/component/K2 graph generation, including JSON-driven static mesh assemblies.
 - Remote Control HTTP/WebSocket is enabled on `127.0.0.1` for reflected property/function access on ports `30010` and `30020`.
 - Do not expose these ports or Python remote execution outside localhost unless you intentionally want a remote code execution foot-gun.
