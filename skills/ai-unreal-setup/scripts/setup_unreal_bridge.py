@@ -2,7 +2,8 @@
 """Install the Pi/Unreal editor automation bridge into an Unreal project.
 
 This script is intentionally dependency-free. It modifies project config files and
-copies template Python helpers; it does not install packages or system tools.
+copies template Python/C++ bridge files; it does not install packages, Visual Studio
+components, or other system tools.
 """
 
 from __future__ import annotations
@@ -35,18 +36,15 @@ REMOTE_CONTROL_SETTINGS = {
     "RemoteControlWebsocketServerBindAddress": "127.0.0.1",
     "RemoteControlWebInterfaceBindAddress": "127.0.0.1",
     "RemoteControlWebInterfacePort": "30000",
-    "bRestrictServerAccess": "True",
+    # Keep the HTTP/WebSocket listeners bound to 127.0.0.1. Some Unreal versions
+    # reject hand-written AllowlistedClients struct values in config, so this
+    # setup relies on loopback-only bind addresses for local safety.
+    "bRestrictServerAccess": "False",
     "bEnableRemotePythonExecution": "False",
     "bAllowConsoleCommandRemoteExecution": "False",
     "AllowedOrigin": "*",
     "bEnforcePassphraseForRemoteClients": "True",
 }
-
-REMOTE_CONTROL_ARRAY_LINES = [
-    "!AllowlistedClients=ClearArray",
-    "+AllowlistedClients=(LowerBound=(ClassA=127,ClassB=0,ClassC=0,ClassD=1),UpperBound=(ClassA=127,ClassB=0,ClassC=0,ClassD=1))",
-]
-
 
 def find_project_dir(start: Path) -> Path:
     start = start.resolve()
@@ -70,6 +68,7 @@ def ensure_plugins(uproject: dict) -> None:
         "PythonScriptPlugin": {"Enabled": True, "TargetAllowList": ["Editor"]},
         "EditorScriptingUtilities": {"Enabled": True, "TargetAllowList": ["Editor"]},
         "RemoteControl": {"Enabled": True},
+        "PiBlueprintBridge": {"Enabled": True},
     }
 
     plugins = uproject.setdefault("Plugins", [])
@@ -187,6 +186,13 @@ def copy_templates(skill_dir: Path, project_dir: Path, dry_run: bool) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, destination)
 
+    plugin_source = templates / "PiBlueprintBridge"
+    plugin_destination = project_dir / "Plugins" / "PiBlueprintBridge"
+    if dry_run:
+        print(f"Would copy {plugin_source} -> {plugin_destination}")
+    else:
+        shutil.copytree(plugin_source, plugin_destination, dirs_exist_ok=True)
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Install Pi Unreal editor automation bridge files.")
@@ -213,7 +219,6 @@ def main(argv: list[str] | None = None) -> int:
         config_dir / "DefaultRemoteControl.ini",
         REMOTE_CONTROL_SECTION,
         REMOTE_CONTROL_SETTINGS,
-        extra_lines=REMOTE_CONTROL_ARRAY_LINES,
         remove_keys={"AllowlistedClients"},
         dry_run=args.dry_run,
     )
